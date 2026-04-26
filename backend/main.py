@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from pydantic import BaseModel
 import datetime
+import os
+from dotenv import load_dotenv
 
 from controllers.location_controller import router as location_router
 from controllers.payment_controller import router as payment_router
@@ -21,9 +23,16 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="CityFlow API")
 
+load_dotenv()
+
+cors_origins_env = os.getenv("CORS_ORIGINS") or os.getenv("FRONTEND_ORIGIN") or ""
+cors_origins = ["*"]
+if cors_origins_env:
+    cors_origins = [origin.strip() for origin in cors_origins_env.split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

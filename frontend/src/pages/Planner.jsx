@@ -6,7 +6,7 @@ import { Circle, CircleMarker, MapContainer, Marker, Polyline, Popup, TileLayer,
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 const BAKU_CENTER = [40.4093, 49.8671];
 const DEFAULT_ZOOM = 12;
 const ROUTE_COLORS = ['#111111', '#7c3aed', '#f97316'];
@@ -574,7 +574,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
     setCurrentStepPaid(!metroAwareSteps[0]?.requires_payment);
     setPaymentMessage(
       metroAwareSteps[0]?.requires_payment
-        ? 'QR ödəniş edin və trip başlasın.'
+        ? 'QR ödəniş edin və səfər başlasın.'
         : 'Bu metro seqmenti üçün əlavə ödəniş tələb olunmur.'
     );
     setLastQrCode('');
@@ -1020,7 +1020,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
 
             {startPoint && (
               <Marker position={startPoint} icon={startIcon}>
-                <Popup>{selectedMapRoute?.start || 'Start'}</Popup>
+                <Popup>{selectedMapRoute?.start || 'Başlanğıc'}</Popup>
               </Marker>
             )}
 
@@ -1162,13 +1162,13 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
                       <div className="flex items-start gap-3">
                         <div className="w-16 h-16 bg-white border border-emerald-300 rounded p-1 shrink-0">
                           {qrImageDataUrl ? (
-                            <img src={qrImageDataUrl} alt="Payment QR code" className="w-full h-full object-contain" />
+                            <img src={qrImageDataUrl} alt="Ödəniş QR kodu" className="w-full h-full object-contain" />
                           ) : (
                             <div className="w-full h-full bg-gray-100 rounded" />
                           )}
                         </div>
                         <div className="break-all">
-                          <p className="font-bold">QR Code</p>
+                          <p className="font-bold">QR kod</p>
                           <p>{lastQrCode}</p>
                         </div>
                       </div>
@@ -1243,7 +1243,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
                 onClick={deactivateTravelMode}
                 className="mt-3 bg-white border border-emerald-300 text-emerald-700 px-3 py-2 rounded-lg text-xs font-bold hover:bg-emerald-100"
               >
-                Deaktiv et və route dəyiş
+                Deaktiv et və marşrutu dəyiş
               </button>
             </div>
           )}
@@ -1398,22 +1398,22 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold">{route.confidence}%</span>
                     </div>
-                    <span className="text-[10px] font-semibold text-gray-500">Hybrid model</span>
+                    <span className="text-[10px] font-semibold text-gray-500">Hibrid model</span>
                   </div>
                 </div>
 
                 {route.density_prediction?.components && (
                   <div className="mb-4 grid grid-cols-3 gap-2 text-[10px]">
                     <div className="rounded-lg bg-gray-50 px-2 py-2">
-                      <span className="block font-bold text-gray-400 uppercase">Time</span>
+                      <span className="block font-bold text-gray-400 uppercase">Vaxt</span>
                       <span className="font-semibold text-gray-700">{Math.round(route.density_prediction.components.time_based)}%</span>
                     </div>
                     <div className="rounded-lg bg-gray-50 px-2 py-2">
-                      <span className="block font-bold text-gray-400 uppercase">History</span>
+                      <span className="block font-bold text-gray-400 uppercase">Tarixçə</span>
                       <span className="font-semibold text-gray-700">{Math.round(route.density_prediction.components.historical)}%</span>
                     </div>
                     <div className="rounded-lg bg-gray-50 px-2 py-2">
-                      <span className="block font-bold text-gray-400 uppercase">Realtime</span>
+                      <span className="block font-bold text-gray-400 uppercase">Real vaxt</span>
                       <span className="font-semibold text-gray-700">{Math.round(route.density_prediction.components.realtime)}%</span>
                     </div>
                   </div>
@@ -1430,10 +1430,10 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
                     onClick={() => handleSelectRoute(route)}
                     className="bg-black text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-800 transition-colors disabled:opacity-40"
                   >
-                    {isSelected ? 'Selected' : 'Select Route'}
+                    {isSelected ? 'Seçilib' : 'Marşrutu seç'}
                   </button>
                   <div className="flex items-center gap-1.5 text-xs font-bold text-gray-400">
-                    <Clock size={14} /> <span>Wait 15m for +{route.bonus_points} pts</span>
+                    <Clock size={14} /> <span>15 dəq gözlə +{route.bonus_points} xal</span>
                   </div>
                 </div>
               </div>
