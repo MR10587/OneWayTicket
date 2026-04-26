@@ -62,7 +62,7 @@ function App() {
       case 'signin': return <SignIn onSignedIn={handleSignedIn} />;
       case 'landing': return <Landing onStart={() => setCurrentPage('planner')} />;
       case 'planner': return <Planner signedInEmail={signedInEmail} onProfileRefresh={() => fetchProfile(signedInEmail)} />;
-      case 'rewards': return <Rewards profile={userProfile} membershipTier={getMembershipTier(userProfile?.wallet?.points)} />;
+      case 'rewards': return <Rewards profile={userProfile} membershipTier={getMembershipTier(userProfile?.wallet?.points)} onRefreshProfile={() => fetchProfile(signedInEmail)} />;
       case 'system': return <SystemAI />;
       default: return <SignIn onSignedIn={handleSignedIn} />;
     }

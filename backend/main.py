@@ -4,8 +4,13 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from pydantic import BaseModel
 import datetime
+<<<<<<< HEAD
 import os
 from dotenv import load_dotenv
+=======
+import uuid
+from datetime import timedelta
+>>>>>>> 1f9811798d1e824b186830edb39d4b4bdeb15338
 
 from controllers.location_controller import router as location_router
 from controllers.payment_controller import router as payment_router
@@ -96,7 +101,7 @@ def startup_populate():
             db.commit()
             db.refresh(new_user)
             
-            wallet = models.Wallet(user_id=new_user.id, points=1250, co2_saved=4.2, peak_crowds_avoided=12)
+            wallet = models.Wallet(user_id=new_user.id, points=2000, co2_saved=4.2, peak_crowds_avoided=12)
             db.add(wallet)
 
             card_balance = models.CardBalance(user_id=new_user.id, amount_azn=100.0)
@@ -113,7 +118,13 @@ def startup_populate():
             )
             
             coupons = [
-                models.Coupon(title="Espresso Baku", description="Free Flat White", cost_points=150, partner_name="Espresso Baku"),
+                models.Coupon(
+                    title="1 ədəd pulsuz cookie",
+                    description="Costa Coffee-dən dadlı cookie hədiyyə",
+                    cost_points=1000,
+                    partner_name="Costa Coffee",
+                    image_url="/images/images.jpeg"
+                ),
                 models.Coupon(title="Baku Metro", description="10-Trip Transit Pass", cost_points=800, partner_name="Baku Metro"),
                 models.Coupon(title="BookZone Library", description="Any Paperback -25%", cost_points=300, partner_name="BookZone Library"),
             ]
@@ -121,7 +132,9 @@ def startup_populate():
             db.commit()
         else:
             if not demo_user.wallet:
-                db.add(models.Wallet(user_id=demo_user.id, points=1250, co2_saved=4.2, peak_crowds_avoided=12))
+                db.add(models.Wallet(user_id=demo_user.id, points=2000, co2_saved=4.2, peak_crowds_avoided=12))
+            else:
+                demo_user.wallet.points = 2000 # Force 2000 XP for testing
             if not demo_user.card_balance:
                 db.add(models.CardBalance(user_id=demo_user.id, amount_azn=100.0))
             if not demo_user.sign_in_credential:
@@ -138,6 +151,20 @@ def startup_populate():
             db.commit()
 
         location_service.ensure_seeded_stops(db)
+        
+        # Ensure Costa Coffee coupon exists
+        costa = db.query(models.Coupon).filter(models.Coupon.partner_name == "Costa Coffee").first()
+        if not costa:
+            new_costa = models.Coupon(
+                title="1 ədəd pulsuz cookie",
+                description="Costa Coffee-dən dadlı cookie hədiyyə",
+                cost_points=1000,
+                partner_name="Costa Coffee",
+                image_url="/images/images.jpeg"
+            )
+            db.add(new_costa)
+            db.commit()
+
         _cleanup_cached_crowding(db)
     finally:
         db.close()
@@ -551,4 +578,77 @@ async def get_profile(email: Optional[str] = None, db: Session = Depends(get_db)
 
 @app.get("/coupons")
 async def get_coupons(db: Session = Depends(get_db)):
-    return db.query(models.Coupon).all()
+    # Put Costa Coffee first if it exists, then others
+    all_coupons = db.query(models.Coupon).all()
+    costa = [c for c in all_coupons if c.partner_name == "Costa Coffee"]
+    others = [c for c in all_coupons if c.partner_name != "Costa Coffee"]
+    return costa + others
+
+@app.post("/coupons/purchase/{coupon_id}")
+async def purchase_coupon(coupon_id: int, db: Session = Depends(get_db)):
+    # In a real app, we'd get the user from auth. For demo, we use the demo user.
+    user = db.query(models.User).filter(models.User.email == "demo@bakukart.az").first()
+    if not user:
+        raise HTTPException(status_code=404, detail="İstifadəçi tapılmadı")
+    
+    coupon = db.query(models.Coupon).filter(models.Coupon.id == coupon_id).first()
+    if not coupon:
+        raise HTTPException(status_code=404, detail="Kupon tapılmadı")
+    
+    if user.wallet.points < coupon.cost_points:
+        raise HTTPException(status_code=400, detail="Kifayət qədər XP xalınız yoxdur")
+    
+    # Generate unique promo code
+    promo_code = f"BK-{uuid.uuid4().hex[:8].upper()}"
+    
+    # Deduct points
+    user.wallet.points -= coupon.cost_points
+    
+    # Create user coupon
+    user_coupon = models.UserCoupon(
+        user_id=user.id,
+        coupon_id=coupon.id,
+        promo_code=promo_code,
+        expires_at=datetime.datetime.utcnow() + timedelta(days=30),
+        is_used=False
+    )
+    
+    db.add(user_coupon)
+    
+    # Add transaction history
+    transaction = models.BonusTransaction(
+        wallet_id=user.wallet.id,
+        amount=-coupon.cost_points,
+        description=f"{coupon.partner_name} - {coupon.title} alışı"
+    )
+    db.add(transaction)
+    
+    db.commit()
+    db.refresh(user_coupon)
+    
+    return {
+        "message": "Alış uğurla tamamlandı",
+        "promo_code": promo_code,
+        "expires_at": user_coupon.expires_at,
+        "new_points_balance": user.wallet.points
+    }
+
+@app.get("/user/coupons")
+async def get_user_coupons(db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == "demo@bakukart.az").first()
+    if not user:
+        raise HTTPException(status_code=404, detail="İstifadəçi tapılmadı")
+    
+    # Return coupons with details
+    results = []
+    for uc in user.coupons:
+        results.append({
+            "id": uc.id,
+            "title": uc.coupon.title,
+            "partner_name": uc.coupon.partner_name,
+            "promo_code": uc.promo_code,
+            "expires_at": uc.expires_at,
+            "is_used": uc.is_used,
+            "image_url": uc.coupon.image_url
+        })
+    return results
