@@ -1,6 +1,7 @@
 import datetime
 import heapq
 import math
+import random
 import re
 import unicodedata
 from collections import defaultdict
@@ -420,15 +421,21 @@ class RoutingService:
     def _apply_rush_hour_adjustments(self, route, is_rush):
         if not is_rush:
             return
-        route["crowding"] = min(99, int(route.get("crowding", 35) + 22))
+        route["crowding"] = max(70, min(90, int(route.get("crowding", 80))))
         route["eta"] = max(1, int(route.get("eta", 20) * 1.25))
         route["bonus_points"] = int(route.get("bonus_points", 0) + 40)
         route["explanation"] = "Pik saat təsiri nəzərə alındı: gecikmiş çıxış bonusu ilə daha rahat səfər mümkündür."
 
     def _apply_density_prediction(self, route, desired_time=None, db=None):
         density = density_service.estimate_route_density(route, desired_time=desired_time, db=db)
+        is_rush = self._is_rush_hour(desired_time)
+        crowding = random.randint(70, 90) if is_rush else random.randint(0, 50)
+
+        density["score"] = crowding
         route["density_prediction"] = density
-        route["crowding"] = density["score"]
+        route["crowding"] = crowding
+        route["is_peak_hour"] = is_rush
+        route["crowd_color"] = "red" if is_rush else "green"
         route["confidence"] = density["confidence"]
 
     def _enrich_route_labels(self, route):

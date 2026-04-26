@@ -1370,7 +1370,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
                     <span className="text-[10px] font-bold text-gray-400 uppercase">Crowding</span>
                     <div className="flex items-center gap-2">
                       <div className="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
-                        <div className={`h-full ${route.crowding > 70 ? 'bg-red-500' : 'bg-green-500'}`} style={{ width: `${route.crowding}%` }} />
+                        <div className={`h-full ${route.is_peak_hour ? 'bg-red-500' : 'bg-green-500'}`} style={{ width: `${route.crowding}%` }} />
                       </div>
                       <span className="text-xs font-bold">{route.crowding}%</span>
                     </div>

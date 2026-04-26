@@ -35,6 +35,46 @@ app.include_router(route_router)
 app.include_router(trip_router)
 app.include_router(waiting_router)
 
+
+def _cleanup_cached_crowding(db: Session):
+    # Remove cached wait-bonus snapshots that contain out-of-range historical scores.
+    deleted_count = (
+        db.query(models.WaitBonusSession)
+        .filter(
+            (models.WaitBonusSession.current_density_score > 90)
+            | (models.WaitBonusSession.projected_density_score > 90)
+        )
+        .delete(synchronize_session=False)
+    )
+
+    # Normalize persisted journey snapshots if old crowding values were stored > 90.
+    any_changed = False
+    journeys = db.query(models.JourneyHistory).all()
+    for journey in journeys:
+        row_changed = False
+        details = journey.route_details or {}
+        selected_route = details.get("selected_route") or {}
+        density_prediction = selected_route.get("density_prediction") or {}
+
+        current_crowding = selected_route.get("crowding")
+        if isinstance(current_crowding, (int, float)) and current_crowding > 90:
+            selected_route["crowding"] = 90
+            row_changed = True
+
+        density_score = density_prediction.get("score")
+        if isinstance(density_score, (int, float)) and density_score > 90:
+            density_prediction["score"] = 90
+            selected_route["density_prediction"] = density_prediction
+            row_changed = True
+
+        if row_changed:
+            details["selected_route"] = selected_route
+            journey.route_details = details
+            any_changed = True
+
+    if any_changed or deleted_count > 0:
+        db.commit()
+
 # Initialize Demo User if not exists
 @app.on_event("startup")
 def startup_populate():
@@ -89,6 +129,7 @@ def startup_populate():
             db.commit()
 
         location_service.ensure_seeded_stops(db)
+        _cleanup_cached_crowding(db)
     finally:
         db.close()
 
