@@ -73,7 +73,9 @@ class UserCoupon(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     coupon_id = Column(Integer, ForeignKey("coupons.id"))
+    promo_code = Column(String, unique=True)
     purchased_at = Column(DateTime, default=datetime.datetime.utcnow)
+    expires_at = Column(DateTime)
     is_used = Column(Boolean, default=False)
     
     user = relationship("User", back_populates="coupons")

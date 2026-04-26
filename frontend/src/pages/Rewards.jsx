@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Award, Zap, History, Target, Settings, ChevronRight, ShoppingBag, Gift } from 'lucide-react';
+import { Award, Zap, History, Target, Settings, ChevronRight, ShoppingBag, Gift, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { getMembershipTier } from '../utils/membership';
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
-const Rewards = ({ profile, membershipTier }) => {
+const Rewards = ({ profile, membershipTier, onRefreshProfile }) => {
   const [coupons, setCoupons] = useState([]);
+  const [userCoupons, setUserCoupons] = useState([]);
+  const [activeTab, setActiveTab] = useState('shop'); // 'shop' or 'my-coupons'
+  const [purchaseStatus, setPurchaseStatus] = useState({ loading: false, error: null, success: null });
 
   useEffect(() => {
     fetchCoupons();
+    fetchUserCoupons();
   }, []);
 
   const fetchCoupons = async () => {
@@ -18,6 +22,35 @@ const Rewards = ({ profile, membershipTier }) => {
       setCoupons(res.data);
     } catch (err) {
       console.error("Error fetching coupons", err);
+    }
+  };
+
+  const fetchUserCoupons = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/user/coupons`);
+      setUserCoupons(res.data);
+    } catch (err) {
+      console.error("Error fetching user coupons", err);
+    }
+  };
+
+  const handlePurchase = async (couponId) => {
+    setPurchaseStatus({ loading: true, error: null, success: null });
+    try {
+      const res = await axios.post(`${API_BASE_URL}/coupons/purchase/${couponId}`);
+      setPurchaseStatus({ 
+        loading: false, 
+        error: null, 
+        success: `Təbriklər! Promo kodunuz: ${res.data.promo_code}` 
+      });
+      // Refresh user coupons list
+      fetchUserCoupons();
+      // Refresh global profile points without reloading the whole page
+      if (onRefreshProfile) onRefreshProfile();
+    } catch (err) {
+      const errorMsg = err.response?.data?.detail || "Alış zamanı xəta baş verdi";
+      setPurchaseStatus({ loading: false, error: errorMsg, success: null });
+      setTimeout(() => setPurchaseStatus(prev => ({ ...prev, error: null })), 4000);
     }
   };
 
@@ -47,6 +80,14 @@ const Rewards = ({ profile, membershipTier }) => {
     const d = new Date(value);
     if (Number.isNaN(d.getTime())) return 'Naməlum vaxt';
     return d.toLocaleString('az-AZ');
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('az-AZ', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
   };
 
   return (
@@ -91,8 +132,126 @@ const Rewards = ({ profile, membershipTier }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-        {/* Left: Activity & Challenges */}
+        {/* Left: Activity & Marketplace */}
         <div className="lg:col-span-2 space-y-12">
+          
+          {/* Marketplace Section */}
+          <section>
+            <div className="flex justify-between items-center mb-6">
+               <h3 className="text-xl font-bold flex items-center gap-2"><Gift size={20} /> Xalları İstifadə Et</h3>
+               <div className="flex gap-2">
+                  <button 
+                    onClick={() => setActiveTab('shop')}
+                    className={`${activeTab === 'shop' ? 'bg-black text-white' : 'bg-gray-100 text-gray-400'} text-[10px] font-bold px-3 py-1.5 rounded-lg uppercase transition-all`}
+                  >
+                    Mağaza
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('my-coupons')}
+                    className={`${activeTab === 'my-coupons' ? 'bg-black text-white' : 'bg-gray-100 text-gray-400'} text-[10px] font-bold px-3 py-1.5 rounded-lg uppercase transition-all flex items-center gap-1.5`}
+                  >
+                    Kuponlarım {userCoupons.length > 0 && <span className="bg-red-500 text-white w-4 h-4 rounded-full flex items-center justify-center text-[8px]">{userCoupons.length}</span>}
+                  </button>
+               </div>
+            </div>
+
+            {/* Notification Messages */}
+            {purchaseStatus.success && (
+              <div className="mb-6 p-4 bg-green-50 border border-green-100 rounded-2xl flex items-center gap-3 text-green-700 animate-in fade-in slide-in-from-top-4">
+                <CheckCircle2 size={20} />
+                <span className="text-sm font-bold">{purchaseStatus.success}</span>
+              </div>
+            )}
+            {purchaseStatus.error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-700 animate-in fade-in slide-in-from-top-4">
+                <AlertCircle size={20} />
+                <span className="text-sm font-bold">{purchaseStatus.error}</span>
+              </div>
+            )}
+
+            {activeTab === 'shop' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {coupons.map((coupon, i) => (
+                  <div key={i} className="bg-white rounded-3xl border border-gray-100 overflow-hidden hover:shadow-xl transition-all group flex flex-col h-full">
+                      <div className="h-40 bg-white relative flex items-center justify-center overflow-hidden border-b border-gray-50 shrink-0">
+                        {coupon.image_url ? (
+                          <img 
+                            src={coupon.image_url} 
+                            alt={coupon.partner_name} 
+                            className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-50 flex items-center justify-center">
+                              <Gift size={40} className="text-gray-200" />
+                          </div>
+                        )}
+                        <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-[9px] font-bold uppercase flex items-center gap-1.5">
+                            <Award size={10} className="text-yellow-500" /> Tərəfdaş Seçimi
+                        </div>
+                      </div>
+                      <div className="p-6 flex flex-col flex-1">
+                        <h4 className="font-bold text-lg mb-1">{coupon.partner_name}</h4>
+                        <p className="text-gray-500 text-sm mb-4 line-clamp-2">{coupon.description}</p>
+                        <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
+                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">30 Gün Keçərli</span>
+                            <button 
+                              onClick={() => handlePurchase(coupon.id)}
+                              disabled={purchaseStatus.loading || points < coupon.cost_points}
+                              className={`${points < coupon.cost_points ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800'} px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all disabled:opacity-50`}
+                            >
+                              {purchaseStatus.loading ? "..." : points < coupon.cost_points ? "Kifayət deyil" : `${coupon.cost_points} XP`} <ChevronRight size={14} />
+                            </button>
+                        </div>
+                      </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {userCoupons.length > 0 ? userCoupons.map((uc) => (
+                  <div key={uc.id} className="bg-white p-6 rounded-3xl border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 bg-gray-50 rounded-2xl overflow-hidden p-2 flex items-center justify-center shrink-0 border border-gray-100">
+                        {uc.image_url ? (
+                          <img src={uc.image_url} alt={uc.partner_name} className="w-full h-full object-contain" />
+                        ) : (
+                          <Gift size={24} className="text-gray-300" />
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-base">{uc.partner_name}</h4>
+                        <p className="text-sm text-gray-500">{uc.title}</p>
+                        <div className="flex items-center gap-3 mt-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                          <span className="flex items-center gap-1"><Clock size={12} /> Bitmə Tarixi: {formatDate(uc.expires_at)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-center md:items-end gap-2">
+                       <div className="bg-gray-100 border-2 border-dashed border-gray-200 px-6 py-3 rounded-xl font-mono text-lg font-bold tracking-widest text-black">
+                          {uc.promo_code}
+                       </div>
+                       <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest"> Kassirə göstərin</span>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="bg-white rounded-3xl border border-gray-100 p-12 text-center">
+                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                       <Gift size={24} className="text-gray-300" />
+                    </div>
+                    <h4 className="font-bold text-gray-900 mb-1 text-lg">Hələ kuponunuz yoxdur</h4>
+                    <p className="text-sm text-gray-500 mb-6">Səfərlər edərək XP toplayın və hədiyyələr qazanın.</p>
+                    <button 
+                      onClick={() => setActiveTab('shop')}
+                      className="text-xs font-bold text-black border-b-2 border-black pb-1 hover:text-gray-600 hover:border-gray-600 transition-all uppercase tracking-widest"
+                    >
+                      Mağazaya Get
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+
           {/* Activity Feed */}
           <section>
             <div className="flex justify-between items-center mb-6">
@@ -118,38 +277,6 @@ const Rewards = ({ profile, membershipTier }) => {
                )) : (
                  <div className="p-6 text-sm text-gray-500">Hələ heç bir fəaliyyət yoxdur.</div>
                )}
-            </div>
-          </section>
-
-          {/* Redeem Points Marketplace */}
-          <section>
-            <div className="flex justify-between items-center mb-6">
-               <h3 className="text-xl font-bold flex items-center gap-2"><Gift size={20} /> Xalları İstifadə Et</h3>
-               <div className="flex gap-2">
-                  <button className="bg-gray-100 text-[10px] font-bold px-3 py-1.5 rounded-lg uppercase">Mağaza</button>
-                  <button className="text-[10px] font-bold px-3 py-1.5 rounded-lg uppercase text-gray-400">Kuponlarım</button>
-               </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               {coupons.map((coupon, i) => (
-                 <div key={i} className="bg-white rounded-3xl border border-gray-100 overflow-hidden hover:shadow-xl transition-all cursor-pointer group">
-                    <div className="h-40 bg-gray-100 relative">
-                       <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-[9px] font-bold uppercase flex items-center gap-1.5">
-                          <Award size={10} className="text-yellow-500" /> Tərəfdaş Seçimi
-                       </div>
-                    </div>
-                    <div className="p-6">
-                       <h4 className="font-bold text-lg mb-1">{coupon.partner_name}</h4>
-                       <p className="text-gray-500 text-sm mb-4">{coupon.description}</p>
-                       <div className="flex items-center justify-between pt-4 border-t border-gray-50">
-                          <span className="text-xs text-gray-400">30 gün ərzində keçərlidir</span>
-                          <button className="bg-black text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 group-hover:gap-4 transition-all">
-                             {coupon.cost_points} xal <ChevronRight size={14} />
-                          </button>
-                       </div>
-                    </div>
-                 </div>
-               ))}
             </div>
           </section>
         </div>
