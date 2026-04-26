@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Award, Zap, History, Target, Settings, ChevronRight, ShoppingBag, Gift, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Award, Zap, History, ChevronRight, ShoppingBag, Gift, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { getMembershipTier } from '../utils/membership';
+import espressoImage from '../../images/espresso-coffee-recipe04-500x375.webp';
+import costaImage from '../../images/images.jpeg';
+import scooterImage from '../../images/skuter-by-lxj-466-11-133-10-elektron-skuterlr-35573-39-K.jpg';
+import bikeImage from '../../images/velosiped.jpg';
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 const Rewards = ({ profile, membershipTier, onRefreshProfile }) => {
   const [coupons, setCoupons] = useState([]);
@@ -13,8 +17,14 @@ const Rewards = ({ profile, membershipTier, onRefreshProfile }) => {
 
   useEffect(() => {
     fetchCoupons();
-    fetchUserCoupons();
   }, []);
+
+  const email = profile?.email || localStorage.getItem('signedInEmail') || '';
+
+  useEffect(() => {
+    if (!email) return;
+    fetchUserCoupons(email);
+  }, [email]);
 
   const fetchCoupons = async () => {
     try {
@@ -25,9 +35,11 @@ const Rewards = ({ profile, membershipTier, onRefreshProfile }) => {
     }
   };
 
-  const fetchUserCoupons = async () => {
+  const fetchUserCoupons = async (userEmail) => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/user/coupons`);
+      const res = await axios.get(`${API_BASE_URL}/user/coupons`, {
+        params: { email: userEmail },
+      });
       setUserCoupons(res.data);
     } catch (err) {
       console.error("Error fetching user coupons", err);
@@ -37,14 +49,16 @@ const Rewards = ({ profile, membershipTier, onRefreshProfile }) => {
   const handlePurchase = async (couponId) => {
     setPurchaseStatus({ loading: true, error: null, success: null });
     try {
-      const res = await axios.post(`${API_BASE_URL}/coupons/purchase/${couponId}`);
+      const res = await axios.post(`${API_BASE_URL}/coupons/purchase/${couponId}`, null, {
+        params: { email },
+      });
       setPurchaseStatus({ 
         loading: false, 
         error: null, 
         success: `Təbriklər! Promo kodunuz: ${res.data.promo_code}` 
       });
       // Refresh user coupons list
-      fetchUserCoupons();
+      if (email) fetchUserCoupons(email);
       // Refresh global profile points without reloading the whole page
       if (onRefreshProfile) onRefreshProfile();
     } catch (err) {
@@ -90,6 +104,15 @@ const Rewards = ({ profile, membershipTier, onRefreshProfile }) => {
     });
   };
 
+  const resolveCouponImage = (coupon) => {
+    const partner = String(coupon?.partner_name || '').toLowerCase();
+    if (partner.includes('espresso')) return espressoImage;
+    if (partner.includes('costa')) return costaImage;
+    if (partner.includes('skuter')) return scooterImage;
+    if (partner.includes('velosiped')) return bikeImage;
+    return null;
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
       {/* Header Stat Card */}
@@ -131,9 +154,7 @@ const Rewards = ({ profile, membershipTier, onRefreshProfile }) => {
         <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-white/5 rounded-full" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-        {/* Left: Activity & Marketplace */}
-        <div className="lg:col-span-2 space-y-12">
+      <div className="space-y-12">
           
           {/* Marketplace Section */}
           <section>
@@ -173,20 +194,23 @@ const Rewards = ({ profile, membershipTier, onRefreshProfile }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {coupons.map((coupon, i) => (
                   <div key={i} className="bg-white rounded-3xl border border-gray-100 overflow-hidden hover:shadow-xl transition-all group flex flex-col h-full">
-                      <div className="h-40 bg-white relative flex items-center justify-center overflow-hidden border-b border-gray-50 shrink-0">
-                        {coupon.image_url ? (
-                          <img 
-                            src={coupon.image_url} 
-                            alt={coupon.partner_name} 
-                            className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500"
+                      <div className="h-40 bg-white relative overflow-hidden border-b border-gray-50 shrink-0">
+                        {resolveCouponImage(coupon) ? (
+                          <img
+                            src={resolveCouponImage(coupon)}
+                            alt={coupon.partner_name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
                         ) : (
                           <div className="w-full h-full bg-gray-50 flex items-center justify-center">
-                              <Gift size={40} className="text-gray-200" />
+                            <Gift size={40} className="text-gray-200" />
                           </div>
                         )}
                         <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-[9px] font-bold uppercase flex items-center gap-1.5">
-                            <Award size={10} className="text-yellow-500" /> Tərəfdaş Seçimi
+                          <Award size={10} className="text-yellow-500" /> Tərəfdaş
+                        </div>
+                        <div className="absolute top-4 right-4 bg-black/90 backdrop-blur-sm text-white px-2 py-1 rounded-lg text-[9px] font-bold uppercase">
+                          {coupon.cost_points} xal
                         </div>
                       </div>
                       <div className="p-6 flex flex-col flex-1">
@@ -199,7 +223,7 @@ const Rewards = ({ profile, membershipTier, onRefreshProfile }) => {
                               disabled={purchaseStatus.loading || points < coupon.cost_points}
                               className={`${points < coupon.cost_points ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800'} px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all disabled:opacity-50`}
                             >
-                              {purchaseStatus.loading ? "..." : points < coupon.cost_points ? "Kifayət deyil" : `${coupon.cost_points} XP`} <ChevronRight size={14} />
+                              {purchaseStatus.loading ? "..." : points < coupon.cost_points ? "Kifayət deyil" : `${coupon.cost_points} xal`} <ChevronRight size={14} />
                             </button>
                         </div>
                       </div>
@@ -212,8 +236,8 @@ const Rewards = ({ profile, membershipTier, onRefreshProfile }) => {
                   <div key={uc.id} className="bg-white p-6 rounded-3xl border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="flex items-center gap-4">
                       <div className="w-16 h-16 bg-gray-50 rounded-2xl overflow-hidden p-2 flex items-center justify-center shrink-0 border border-gray-100">
-                        {uc.image_url ? (
-                          <img src={uc.image_url} alt={uc.partner_name} className="w-full h-full object-contain" />
+                        {resolveCouponImage(uc) ? (
+                          <img src={resolveCouponImage(uc)} alt={uc.partner_name} className="w-full h-full object-cover" />
                         ) : (
                           <Gift size={24} className="text-gray-300" />
                         )}
@@ -279,53 +303,6 @@ const Rewards = ({ profile, membershipTier, onRefreshProfile }) => {
                )}
             </div>
           </section>
-        </div>
-
-        {/* Right: Sidebar */}
-        <div className="space-y-12">
-           <section>
-              <h3 className="text-xl font-bold mb-6 flex items-center gap-2"><Target size={20} /> Həftəlik Tapşırıqlar</h3>
-              <div className="space-y-4">
-                 {[
-                   { title: "Gecə Quşu", desc: "Saat 20:00-dan sonra 5 səfər et", pts: "+250", progress: 60 },
-                   { title: "Davamlılıq Çempionu", desc: "10kq CO2 qənaət et", pts: "+500", progress: 40 },
-                 ].map((c, i) => (
-                   <div key={i} className="bg-white p-6 rounded-3xl border border-gray-100">
-                      <div className="flex justify-between items-start mb-4">
-                         <div>
-                            <h4 className="font-bold text-sm">{c.title}</h4>
-                            <p className="text-[11px] text-gray-400 mt-1">{c.desc}</p>
-                         </div>
-                         <span className="text-xs font-bold text-green-600">{c.pts}</span>
-                      </div>
-                      <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                         <div className="h-full bg-black" style={{ width: `${c.progress}%` }} />
-                      </div>
-                   </div>
-                 ))}
-                 <button className="w-full py-4 text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-black">Bütün Tapşırıqlar</button>
-              </div>
-           </section>
-
-           <section>
-              <h3 className="text-xl font-bold mb-6 flex items-center gap-2"><Settings size={20} /> Sürətli Ayarlar</h3>
-              <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden">
-                 {[
-                   { label: "Bildirişlər", status: "2 Yeni" },
-                   { label: "Xal İstifadəsi", status: null },
-                   { label: "Məxfilik", status: null },
-                 ].map((s, i) => (
-                   <div key={i} className="flex items-center justify-between p-5 border-b border-gray-50 last:border-none hover:bg-gray-50 cursor-pointer">
-                      <span className="text-sm font-medium text-gray-600">{s.label}</span>
-                      <div className="flex items-center gap-2">
-                         {s.status && <span className="bg-gray-100 text-[9px] font-bold px-2 py-1 rounded-md uppercase text-gray-400">{s.status}</span>}
-                         <ChevronRight size={16} className="text-gray-300" />
-                      </div>
-                   </div>
-                 ))}
-              </div>
-           </section>
-        </div>
       </div>
     </div>
   );

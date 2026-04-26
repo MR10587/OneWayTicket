@@ -4,8 +4,10 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from pydantic import BaseModel
 import datetime
+import os
 import uuid
 from datetime import timedelta
+from dotenv import load_dotenv
 
 from controllers.location_controller import router as location_router
 from controllers.payment_controller import router as payment_router
@@ -23,9 +25,16 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="CityFlow API")
 
+load_dotenv()
+
+cors_origins_env = os.getenv("CORS_ORIGINS") or os.getenv("FRONTEND_ORIGIN") or ""
+cors_origins = ["*"]
+if cors_origins_env:
+    cors_origins = [origin.strip() for origin in cors_origins_env.split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -82,6 +91,38 @@ def _cleanup_cached_crowding(db: Session):
 def startup_populate():
     db = next(get_db())
     try:
+        desired_coupons = [
+            {
+                "partner_name": "Espresso Baku",
+                "title": "Espresso endirimi",
+                "description": "İstənilən içkiyə 20% endirim",
+                "cost_points": 150,
+                "image_url": None,
+            },
+            {
+                "partner_name": "Costa Baku",
+                "title": "Costa endirimi",
+                "description": "İstənilən məhsula 15% endirim",
+                "cost_points": 200,
+                "image_url": None,
+            },
+            {
+                "partner_name": "Skuter",
+                "title": "Skuter kuponu",
+                "description": "Skuter gedişinə 25% endirim",
+                "cost_points": 400,
+                "image_url": None,
+            },
+            {
+                "partner_name": "Velosiped",
+                "title": "Velosiped kuponu",
+                "description": "Velosiped icarəsinə 20% endirim",
+                "cost_points": 350,
+                "image_url": None,
+            },
+        ]
+        allowed_partners = {c["partner_name"] for c in desired_coupons}
+
         demo_user = db.query(models.User).filter(models.User.email == "demo@bakukart.az").first()
         if not demo_user:
             new_user = models.User(full_name="Demo User", email="demo@bakukart.az")
@@ -105,24 +146,24 @@ def startup_populate():
                 )
             )
             
-            coupons = [
-                models.Coupon(
-                    title="1 ədəd pulsuz cookie",
-                    description="Costa Coffee-dən dadlı cookie hədiyyə",
-                    cost_points=1000,
-                    partner_name="Costa Coffee",
-                    image_url="/images/images.jpeg"
-                ),
-                models.Coupon(title="Baku Metro", description="10-Trip Transit Pass", cost_points=800, partner_name="Baku Metro"),
-                models.Coupon(title="BookZone Library", description="Any Paperback -25%", cost_points=300, partner_name="BookZone Library"),
-            ]
-            db.add_all(coupons)
+            db.add_all(
+                [
+                    models.Coupon(
+                        title=c["title"],
+                        description=c["description"],
+                        cost_points=c["cost_points"],
+                        partner_name=c["partner_name"],
+                        image_url=c["image_url"],
+                    )
+                    for c in desired_coupons
+                ]
+            )
             db.commit()
         else:
             if not demo_user.wallet:
                 db.add(models.Wallet(user_id=demo_user.id, points=2000, co2_saved=4.2, peak_crowds_avoided=12))
             else:
-                demo_user.wallet.points = 2000 # Force 2000 XP for testing
+                demo_user.wallet.points = 2000
             if not demo_user.card_balance:
                 db.add(models.CardBalance(user_id=demo_user.id, amount_azn=100.0))
             if not demo_user.sign_in_credential:
@@ -139,18 +180,39 @@ def startup_populate():
             db.commit()
 
         location_service.ensure_seeded_stops(db)
-        
-        # Ensure Costa Coffee coupon exists
-        costa = db.query(models.Coupon).filter(models.Coupon.partner_name == "Costa Coffee").first()
-        if not costa:
-            new_costa = models.Coupon(
-                title="1 ədəd pulsuz cookie",
-                description="Costa Coffee-dən dadlı cookie hədiyyə",
-                cost_points=1000,
-                partner_name="Costa Coffee",
-                image_url="/images/images.jpeg"
-            )
-            db.add(new_costa)
+
+        existing = db.query(models.Coupon).all()
+        existing_by_partner = {c.partner_name: c for c in existing if c.partner_name}
+        changed = False
+        for desired in desired_coupons:
+            partner = desired["partner_name"]
+            row = existing_by_partner.get(partner)
+            if not row:
+                db.add(
+                    models.Coupon(
+                        title=desired["title"],
+                        description=desired["description"],
+                        cost_points=desired["cost_points"],
+                        partner_name=partner,
+                        image_url=desired["image_url"],
+                    )
+                )
+                changed = True
+            else:
+                if row.title != desired["title"]:
+                    row.title = desired["title"]
+                    changed = True
+                if row.description != desired["description"]:
+                    row.description = desired["description"]
+                    changed = True
+                if row.cost_points != desired["cost_points"]:
+                    row.cost_points = desired["cost_points"]
+                    changed = True
+                if row.image_url != desired["image_url"]:
+                    row.image_url = desired["image_url"]
+                    changed = True
+
+        if changed:
             db.commit()
 
         _cleanup_cached_crowding(db)
@@ -566,25 +628,31 @@ async def get_profile(email: Optional[str] = None, db: Session = Depends(get_db)
 
 @app.get("/coupons")
 async def get_coupons(db: Session = Depends(get_db)):
-    # Put Costa Coffee first if it exists, then others
+    allowed_partners = {"Espresso Baku", "Costa Baku", "Skuter", "Velosiped"}
     all_coupons = db.query(models.Coupon).all()
-    costa = [c for c in all_coupons if c.partner_name == "Costa Coffee"]
-    others = [c for c in all_coupons if c.partner_name != "Costa Coffee"]
-    return costa + others
+    allowed = [c for c in all_coupons if c.partner_name in allowed_partners]
+    preferred_order = ["Espresso Baku", "Costa Baku", "Skuter", "Velosiped"]
+    allowed.sort(key=lambda c: preferred_order.index(c.partner_name) if c.partner_name in preferred_order else 999)
+    return allowed
 
 @app.post("/coupons/purchase/{coupon_id}")
-async def purchase_coupon(coupon_id: int, db: Session = Depends(get_db)):
-    # In a real app, we'd get the user from auth. For demo, we use the demo user.
-    user = db.query(models.User).filter(models.User.email == "demo@bakukart.az").first()
+async def purchase_coupon(coupon_id: int, email: Optional[str] = None, db: Session = Depends(get_db)):
+    user = _get_user_by_email(db, email)
     if not user:
         raise HTTPException(status_code=404, detail="İstifadəçi tapılmadı")
+
+    if not user.wallet:
+        wallet = models.Wallet(user_id=user.id, points=0, co2_saved=0.0, peak_crowds_avoided=0)
+        db.add(wallet)
+        db.commit()
+        db.refresh(user)
     
     coupon = db.query(models.Coupon).filter(models.Coupon.id == coupon_id).first()
     if not coupon:
         raise HTTPException(status_code=404, detail="Kupon tapılmadı")
     
     if user.wallet.points < coupon.cost_points:
-        raise HTTPException(status_code=400, detail="Kifayət qədər XP xalınız yoxdur")
+        raise HTTPException(status_code=400, detail="Kifayət qədər xalınız yoxdur")
     
     # Generate unique promo code
     promo_code = f"BK-{uuid.uuid4().hex[:8].upper()}"
@@ -622,14 +690,23 @@ async def purchase_coupon(coupon_id: int, db: Session = Depends(get_db)):
     }
 
 @app.get("/user/coupons")
-async def get_user_coupons(db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.email == "demo@bakukart.az").first()
+async def get_user_coupons(email: Optional[str] = None, db: Session = Depends(get_db)):
+    user = _get_user_by_email(db, email)
     if not user:
         raise HTTPException(status_code=404, detail="İstifadəçi tapılmadı")
+
+    if not user.wallet:
+        wallet = models.Wallet(user_id=user.id, points=0, co2_saved=0.0, peak_crowds_avoided=0)
+        db.add(wallet)
+        db.commit()
+        db.refresh(user)
     
     # Return coupons with details
+    allowed_partners = {"Espresso Baku", "Costa Baku", "Skuter", "Velosiped"}
     results = []
     for uc in user.coupons:
+        if uc.coupon and uc.coupon.partner_name not in allowed_partners:
+            continue
         results.append({
             "id": uc.id,
             "title": uc.coupon.title,

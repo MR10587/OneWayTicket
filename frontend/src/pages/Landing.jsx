@@ -63,10 +63,11 @@ const Landing = ({ onStart }) => {
               </div>
               <p className="text-[10px] text-gray-400">Pik olmayan saatda səyahət üçün +50 CityPoints.</p>
            </div>
-           {/* Placeholder for Map Visual */}
-           <div className="w-full h-full bg-slate-300 flex items-center justify-center">
-              <span className="text-gray-400 font-medium italic">İnteraktiv Xəritə Vizualı</span>
-           </div>
+           <img
+             src="/interactive-map.png"
+             alt="İnteraktiv xəritə"
+             className="w-full h-full object-cover"
+           />
         </div>
       </section>
 
