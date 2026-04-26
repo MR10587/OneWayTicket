@@ -3,10 +3,10 @@ import { Train, Map, Gift, Shield, User } from 'lucide-react';
 
 const Navbar = ({ currentPage, onNavigate, points, membershipTier, isSignedIn, onAuthAction }) => {
   const navItems = [
-    { id: 'landing', label: 'How it works', icon: null },
-    { id: 'planner', label: 'Route Planner', icon: Map },
-    { id: 'rewards', label: 'Rewards', icon: Gift },
-    { id: 'system', label: 'System & AI', icon: Shield },
+    { id: 'landing', label: 'Necə işləyir', icon: null },
+    { id: 'planner', label: 'Marşrut Planlayıcı', icon: Map },
+    { id: 'rewards', label: 'Mükafatlar', icon: Gift },
+    { id: 'system', label: 'Sistem və AI', icon: Shield },
   ];
 
   return (
@@ -34,8 +34,8 @@ const Navbar = ({ currentPage, onNavigate, points, membershipTier, isSignedIn, o
 
       <div className="flex items-center gap-4">
         <div className="flex flex-col items-end mr-2">
-          <span className="text-xs font-bold text-gray-500 uppercase">{points} pts</span>
-          <span className="text-[10px] text-green-600 font-medium">{membershipTier} Member</span>
+          <span className="text-xs font-bold text-gray-500 uppercase">{points} xal</span>
+          <span className="text-[10px] text-green-600 font-medium">{membershipTier} Üzv</span>
         </div>
         <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center border border-gray-200">
           <User size={20} className="text-gray-600" />
@@ -44,7 +44,7 @@ const Navbar = ({ currentPage, onNavigate, points, membershipTier, isSignedIn, o
           onClick={onAuthAction}
           className="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
         >
-          {isSignedIn ? 'Log out' : 'Sign In'}
+          {isSignedIn ? 'Çıxış' : 'Daxil ol'}
         </button>
       </div>
     </nav>

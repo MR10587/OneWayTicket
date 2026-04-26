@@ -56,7 +56,7 @@ const SignIn = ({ onSignedIn }) => {
   return (
     <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-gray-50 px-6 py-12">
       <div className="w-full max-w-lg bg-white rounded-3xl border border-gray-200 p-8 shadow-sm">
-        <h1 className="text-3xl font-bold text-gray-900">{mode === 'login' ? 'Login' : 'Register'}</h1>
+        <h1 className="text-3xl font-bold text-gray-900">{mode === 'login' ? 'Daxil ol' : 'Qeydiyyat'}</h1>
         <p className="text-sm text-gray-500 mt-2">
           {mode === 'login'
             ? 'Qeydiyyatdan keçmisinizsə email və şifrə ilə daxil olun.'
@@ -72,7 +72,7 @@ const SignIn = ({ onSignedIn }) => {
             }}
             className={`py-2 rounded-lg text-sm font-semibold transition-colors ${mode === 'login' ? 'bg-white text-black' : 'text-gray-500'}`}
           >
-            Login
+            Daxil ol
           </button>
           <button
             type="button"
@@ -82,7 +82,7 @@ const SignIn = ({ onSignedIn }) => {
             }}
             className={`py-2 rounded-lg text-sm font-semibold transition-colors ${mode === 'register' ? 'bg-white text-black' : 'text-gray-500'}`}
           >
-            Register
+            Qeydiyyat
           </button>
         </div>
 
@@ -91,7 +91,7 @@ const SignIn = ({ onSignedIn }) => {
             <>
               <input name="full_name" value={registerForm.full_name} onChange={onRegisterChange} placeholder="Ad Soyad" required className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
               <input name="bakikart_id" value={registerForm.bakikart_id} onChange={onRegisterChange} placeholder="BakiKart ID" required className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
-              <input name="phone" value={registerForm.phone} onChange={onRegisterChange} placeholder="Telefon (optional)" className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+              <input name="phone" value={registerForm.phone} onChange={onRegisterChange} placeholder="Telefon (isteğe bağlı)" className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
             </>
           )}
           <input
@@ -125,7 +125,7 @@ const SignIn = ({ onSignedIn }) => {
             className="w-full bg-black text-white py-3.5 rounded-xl font-bold text-sm hover:bg-gray-800 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
           >
             <LogIn size={16} />
-            {loading ? 'Yoxlanılır...' : (mode === 'login' ? 'Login' : 'Register')}
+            {loading ? 'Yoxlanılır...' : (mode === 'login' ? 'Daxil ol' : 'Qeydiyyatdan keç')}
           </button>
         </form>
       </div>

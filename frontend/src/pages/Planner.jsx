@@ -100,7 +100,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
   const [nearestTransit, setNearestTransit] = useState(null);
   const [resolvedStops, setResolvedStops] = useState({ origin: null, destination: null });
   const [useCurrentLocation, setUseCurrentLocation] = useState(false);
-  const [currentLocationLabel, setCurrentLocationLabel] = useState('Current Location');
+  const [currentLocationLabel, setCurrentLocationLabel] = useState('Cari Məkan');
   const [trackingStatus, setTrackingStatus] = useState({ active: false, nearbyUsers: 0, densityScore: 0 });
   const [waitSuggestion, setWaitSuggestion] = useState(null);
   const [waitCountdown, setWaitCountdown] = useState(0);
@@ -200,9 +200,9 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
         const nearest = await fetchNearestTransit(coords);
         if (nearest?.nearest_bus_stop?.name || nearest?.nearest_metro_station?.name) {
           const label = nearest?.nearest_bus_stop?.name || nearest?.nearest_metro_station?.name;
-          setCurrentLocationLabel(`Current Location (${label})`);
+          setCurrentLocationLabel(`Cari Məkan (${label})`);
         } else {
-          setCurrentLocationLabel(`Current Location (${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)})`);
+          setCurrentLocationLabel(`Cari Məkan (${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)})`);
         }
         setStart(CURRENT_LOCATION_OPTION);
       },
@@ -300,7 +300,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
       setActiveWaitSessionId(null);
       setSelectedJourneyTime(time);
       if (useCurrentLocation && userLocation && res.data?.origin?.name) {
-        setCurrentLocationLabel(`Current Location (${res.data.origin.name})`);
+        setCurrentLocationLabel(`Cari Məkan (${res.data.origin.name})`);
       }
     } catch (err) {
       setError("Marşrut tapılmadı. Zəhmət olmasa başqa yer seçin.");
@@ -315,7 +315,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
     const typeText = String(route.type || '').toLowerCase();
     const idText = String(route.id || '');
     if (typeText.includes('no walk') || typeText.trim() === 'walk') {
-      return { mode: 'Walk', name: 'Walk', isMetro: false };
+      return { mode: 'Piyada', name: 'Piyada', isMetro: false };
     }
     const isMetro = typeText.includes('metro') || idText.toLowerCase().includes('metro');
 
@@ -325,7 +325,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
     }
 
     const busNumber = route.route_number || (/^\d+$/.test(idText) ? idText : 'N/A');
-    return { mode: 'Avtobus', name: `No ${busNumber}`, isMetro: false };
+    return { mode: 'Avtobus', name: `№ ${busNumber}`, isMetro: false };
   };
 
   const isRushHour = () => {
@@ -357,7 +357,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
 
     if (!alternative) return '';
     const busNumber = alternative.route_number || alternative.id || 'N/A';
-    return `No ${busNumber}`;
+    return `№ ${busNumber}`;
   };
 
   const submitJourneyDecision = async (route, waited) => {
@@ -443,7 +443,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
         setWaitTargetAt(null);
         setWaitCountdown(0);
         setWaitSkippedDemo(false);
-        startTripTracking(route, time, 'WAITING', res.data.session_id);
+        startTripTracking(route, time, 'GÖZLƏMƏ', res.data.session_id);
       } catch (err) {
         console.error("Waiting suggestion failed", err);
       }
@@ -862,7 +862,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
       <div className="w-[400px] bg-white border-r border-gray-200 flex flex-col h-full">
         <div className="flex-1 overflow-y-auto p-6">
           <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-             <MapPin size={20} /> Plan Journey
+             <MapPin size={20} /> Marşrut Planla
           </h2>
           <form onSubmit={handleSearch} className="space-y-4">
             <div className="relative">
@@ -879,7 +879,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
                 }}
                 className="w-full pl-10 pr-4 py-3 bg-gray-50 rounded-xl border-none text-sm focus:ring-2 focus:ring-black appearance-none"
               >
-                <option value="">Start Location</option>
+                <option value="">Başlanğıc Nöqtəsi</option>
                 {useCurrentLocation && (
                   <option value={CURRENT_LOCATION_OPTION}>{currentLocationLabel}</option>
                 )}
@@ -897,7 +897,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
                 onChange={(e) => setEnd(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 bg-gray-50 rounded-xl border-none text-sm focus:ring-2 focus:ring-black appearance-none"
               >
-                <option value="">Destination</option>
+                <option value="">Təyinat Nöqtəsi</option>
                 {Object.keys(locations).map(id => (
                   <option key={id} value={locations[id].name}>{locations[id].name}</option>
                 ))}
@@ -906,7 +906,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
             
             <div className="pt-2">
               <div className="flex justify-between text-xs font-bold text-gray-400 uppercase mb-3">
-                <span>Time Window</span>
+                <span>Zaman Aralığı</span>
                 <span>{time}</span>
               </div>
               <input 
@@ -922,15 +922,15 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
               disabled={!canSearch}
               className="w-full bg-black text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-800 transition-all disabled:opacity-50"
             >
-              {loading ? "Searching..." : "Find Best Routes"} <Search size={18} />
+              {loading ? "Axtarılır..." : "Ən Yaxşı Marşrutu Tap"} <Search size={18} />
             </button>
           </form>
 
           <div className="mt-6 p-4 bg-orange-50 border border-orange-100 rounded-xl flex gap-3">
              <AlertTriangle size={20} className="text-orange-500 shrink-0" />
              <p className="text-[11px] text-orange-800 font-medium">
-               <span className="font-bold">Peak Hour Warning</span><br />
-               Metro lines M1 & M2 are currently at 95% capacity. AI suggests delaying departure by 15m for 40% less crowding.
+               <span className="font-bold">Pik Saat Xəbərdarlığı</span><br />
+               M1 və M2 metro xətləri hazırda 95% doluluqdadır. AI daha rahat səyahət üçün gedişi 15 dəqiqə gecikdirməyi təklif edir.
              </p>
           </div>
 
@@ -943,29 +943,29 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
               type="button"
               className="w-full bg-white border border-gray-200 text-gray-700 py-3 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors"
             >
-              Use Current Location
+              Cari Məkanı İstifadə Et
             </button>
 
             {(nearestBus || nearestMetro) && (
               <div className="space-y-3">
                 {nearestBus && (
                   <div className="p-4 bg-white border border-gray-200 rounded-xl">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Nearest Bus Stop</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Ən Yaxın Avtobus Dayanacağı</p>
                     <p className="text-sm font-bold text-gray-900">{nearestBus.name}</p>
-                    <p className="text-xs text-gray-500 mt-1">{Math.round(nearestBus.distance_meters)} m away</p>
+                    <p className="text-xs text-gray-500 mt-1">{Math.round(nearestBus.distance_meters)} m məsafədə</p>
                     <p className="text-[11px] text-gray-600 mt-2">
-                      Routes: {(nearestBus.available_routes || []).slice(0, 3).map((item) => item.line_id).join(', ') || 'No routes'}
+                      Xətlər: {(nearestBus.available_routes || []).slice(0, 3).map((item) => item.line_id).join(', ') || 'Xətt yoxdur'}
                     </p>
                   </div>
                 )}
 
                 {nearestMetro && (
                   <div className="p-4 bg-white border border-gray-200 rounded-xl">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Nearest Metro</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Ən Yaxın Metro</p>
                     <p className="text-sm font-bold text-gray-900">{nearestMetro.name}</p>
-                    <p className="text-xs text-gray-500 mt-1">{Math.round(nearestMetro.distance_meters)} m away</p>
+                    <p className="text-xs text-gray-500 mt-1">{Math.round(nearestMetro.distance_meters)} m məsafədə</p>
                     <p className="text-[11px] text-gray-600 mt-2">
-                      Access: {(nearestMetro.available_routes || []).slice(0, 2).map((item) => item.line_id).join(', ') || 'Metro access'}
+                      Xətlər: {(nearestMetro.available_routes || []).slice(0, 2).map((item) => item.line_id).join(', ') || 'Metro çıxışı'}
                     </p>
                   </div>
                 )}
@@ -1039,7 +1039,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
                 <Marker position={userLocationPoint} icon={currentLocationIcon}>
                   <Popup>
                     <div className="text-xs font-medium">
-                      <div>Current Location</div>
+                      <div>Cari Məkan</div>
                       <div>{userLocation.lat.toFixed(5)}, {userLocation.lon.toFixed(5)}</div>
                     </div>
                   </Popup>
@@ -1049,7 +1049,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
 
             {endPoint && (
               <Marker position={endPoint} icon={endIcon}>
-                <Popup>{selectedMapRoute?.end || 'Destination'}</Popup>
+                <Popup>{selectedMapRoute?.end || 'Təyinat'}</Popup>
               </Marker>
             )}
 
@@ -1059,7 +1059,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
                 radius={8}
                 pathOptions={{ color: '#111111', fillColor: '#111111', fillOpacity: 0.9 }}
               >
-                <Popup>Baku city center</Popup>
+                <Popup>Bakı şəhər mərkəzi</Popup>
               </CircleMarker>
             )}
          </MapContainer>
@@ -1074,7 +1074,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
          <div className="absolute top-6 right-6 z-[500] flex flex-col gap-2">
             <div className="bg-white/90 backdrop-blur-sm p-3 rounded-xl shadow-lg border border-gray-100 flex items-center gap-3">
                <div className="w-3 h-1 bg-black rounded-full" />
-               <span className="text-[10px] font-bold uppercase tracking-wider">AI Recommended Path</span>
+               <span className="text-[10px] font-bold uppercase tracking-wider">AI Tövsiyə Edilən Yol</span>
             </div>
             {visibleRoutes.slice(1, 3).map((route, index) => (
               <div key={`${route.id}-legend`} className="bg-white/90 backdrop-blur-sm p-3 rounded-xl shadow-lg border border-gray-100 flex items-center gap-3">
@@ -1089,10 +1089,10 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
          {/* Congestion Forecast Overlay */}
          <div className="absolute bottom-6 left-6 right-6 z-[500] h-32 bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100 p-4">
             <div className="flex justify-between items-center mb-2">
-               <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">City-Wide Congestion Forecast</h4>
+               <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Şəhər Üzrə Sıxlıq Proqnozu</h4>
                <div className="flex gap-4">
-                  <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase"><div className="w-2 h-2 rounded-full bg-black" /> Density %</div>
-                  <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase"><div className="w-2 h-2 rounded-full bg-green-500" /> Reward Multiplier</div>
+                  <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase"><div className="w-2 h-2 rounded-full bg-black" /> Sıxlıq %</div>
+                  <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase"><div className="w-2 h-2 rounded-full bg-green-500" /> Mükafat Əmsalı</div>
                </div>
             </div>
             <div className="w-full h-16 bg-gray-100 rounded-lg flex items-end px-2 gap-1 overflow-hidden">
@@ -1116,14 +1116,14 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
       {/* Right Sidebar - Results */}
       <div className="w-[420px] bg-white border-l border-gray-200 flex flex-col h-full">
         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="font-bold text-sm text-gray-400 uppercase tracking-widest">Optimal Routes</h3>
-          <span className="text-xs text-gray-400 font-medium">{routes.length} paths found</span>
+          <h3 className="font-bold text-sm text-gray-400 uppercase tracking-widest">Optimal Marşrutlar</h3>
+          <span className="text-xs text-gray-400 font-medium">{routes.length} yol tapıldı</span>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/50">
           {walletPoints !== null && (
             <div className="p-3 rounded-xl bg-black text-white text-xs font-semibold">
-              Wallet: {walletPoints} pts
+              Balans: {walletPoints} xal
               {bakikartBalance !== null ? ` • BakiKart: ${Number(bakikartBalance).toFixed(2)} AZN` : ''}
             </div>
           )}
@@ -1134,12 +1134,12 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
               <p className="text-sm">Seçilmiş marşrut: {selectedRoute.start} → {selectedRoute.end}</p>
               {currentStep && (
                 <div className="mt-3 p-3 rounded-lg bg-white border border-emerald-200 text-xs text-emerald-900 space-y-2">
-                  <p className="font-bold uppercase">Transfer Step {currentStepIndex + 1}/{paymentSteps.length}</p>
+                  <p className="font-bold uppercase">Transfer mərhələsi {currentStepIndex + 1}/{paymentSteps.length}</p>
                   <p>{currentStep.mode} • {currentStep.from} → {currentStep.to}</p>
                   <p>Tarif: {Number(currentStep.cost || 0).toFixed(2)} AZN</p>
                   <p>ETA: {Math.ceil(journeyTimerSec / 60)} dəq</p>
                   <p className="text-[11px] font-bold text-emerald-700">
-                    Countdown: {String(Math.floor(journeyTimerSec / 60)).padStart(2, '0')}:{String(journeyTimerSec % 60).padStart(2, '0')}
+                    Geri sayım: {String(Math.floor(journeyTimerSec / 60)).padStart(2, '0')}:{String(journeyTimerSec % 60).padStart(2, '0')}
                   </p>
                   {!currentStep.requires_payment && (
                     <p className="text-[11px] font-semibold text-emerald-700">
@@ -1187,13 +1187,13 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
                         onClick={skipJourneyTimer}
                         className="bg-white border border-emerald-300 text-emerald-700 px-3 py-2 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1"
                       >
-                        <SkipForward size={12} /> Skip Timer
+                        <SkipForward size={12} /> Taymeri keç
                       </button>
                       <button
                         onClick={skipToEndDemo}
                         className="bg-black text-white px-3 py-2 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1"
                       >
-                        <CheckCircle2 size={12} /> Demo Skip to End
+                        <CheckCircle2 size={12} /> Sona keç (demo)
                       </button>
                     </div>
                   )}
@@ -1203,7 +1203,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
                       onClick={skipFirstStep}
                       className="w-full bg-orange-100 border border-orange-300 text-orange-700 px-3 py-2 rounded-lg text-[11px] font-bold"
                     >
-                      Skip First Step (switch to next route)
+                      İlk mərhələni keç (növbəti marşruta keç)
                     </button>
                   )}
 
@@ -1212,7 +1212,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
                       onClick={proceedToNextStep}
                       className="w-full bg-black text-white px-3 py-2 rounded-lg text-[11px] font-bold"
                     >
-                      Next Transfer Step
+                      Növbəti transfer mərhələsi
                     </button>
                   )}
 
@@ -1222,7 +1222,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
                       onClick={completeJourneyAndClaim}
                       className="w-full bg-black text-white px-3 py-2 rounded-lg text-[11px] font-bold disabled:opacity-50 flex items-center justify-center gap-1"
                     >
-                      <CheckCircle2 size={12} /> Complete Journey & Claim Points
+                      <CheckCircle2 size={12} /> Səyahəti tamamla və xalları qazan
                     </button>
                   )}
                 </div>
@@ -1230,11 +1230,11 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
               {trackingStatus.active && (
                 <div className="mt-3 grid grid-cols-2 gap-2 text-[11px]">
                   <div className="rounded-lg bg-white px-3 py-2 border border-emerald-200">
-                    <span className="block font-bold text-emerald-600 uppercase">Nearby GPS</span>
-                    <span className="text-emerald-900 font-semibold">{trackingStatus.nearbyUsers} users</span>
+                    <span className="block font-bold text-emerald-600 uppercase">Yaxınlıqdakı GPS</span>
+                    <span className="text-emerald-900 font-semibold">{trackingStatus.nearbyUsers} istifadəçi</span>
                   </div>
                   <div className="rounded-lg bg-white px-3 py-2 border border-emerald-200">
-                    <span className="block font-bold text-emerald-600 uppercase">Realtime Density</span>
+                    <span className="block font-bold text-emerald-600 uppercase">Real vaxt sıxlığı</span>
                     <span className="text-emerald-900 font-semibold">{trackingStatus.densityScore}%</span>
                   </div>
                 </div>
@@ -1252,11 +1252,17 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
             <div className="p-4 rounded-xl bg-orange-50 border border-orange-200 text-orange-800 space-y-3">
               <p className="text-xs font-bold uppercase">Pik saat tövsiyəsi</p>
               <p className="text-sm leading-relaxed">
-                Hazırda pik saatdır. {waitSuggestion?.projected_density_score ?? selectedRoute.crowding}% səviyyəsinə düşməsi gözlənir. {alternativeBusLabel || 'alternativ avtobusa'} təxmini {Math.max(1, Math.ceil(Number(selectedRoute?.eta || 15)))} dəqiqə sonra minsəniz əlavə +{waitSuggestion?.bonus_points || 25} point qazanacaqsınız.
+                Hazırda pik saatdır. {waitSuggestion?.projected_density_score ?? selectedRoute.crowding}% səviyyəsinə düşməsi gözlənir. {alternativeBusLabel || 'alternativ avtobusa'} təxmini {Math.max(1, Math.ceil(Number(selectedRoute?.eta || 15)))} dəqiqə sonra minsəniz əlavə +{waitSuggestion?.bonus_points || 25} xal qazanacaqsınız.
               </p>
               {waitSuggestion && waitStarted && (
-                <div className="p-3 rounded-lg bg-white border border-orange-200 text-xs text-orange-900 font-semibold">
-                  Countdown: {String(Math.floor(waitCountdown / 60)).padStart(2, '0')}:{String(waitCountdown % 60).padStart(2, '0')}
+                <div className="space-y-2">
+                  <div className="p-3 rounded-lg bg-white border border-orange-200 text-xs text-orange-900 font-semibold flex justify-between items-center">
+                    <span>Gözləmə otağı:</span>
+                    <span className="bg-orange-100 px-2 py-0.5 rounded text-orange-700">12 / 20 nəfər</span>
+                  </div>
+                  <div className="p-3 rounded-lg bg-white border border-orange-200 text-xs text-orange-900 font-semibold">
+                    Geri sayım: {String(Math.floor(waitCountdown / 60)).padStart(2, '0')}:{String(waitCountdown % 60).padStart(2, '0')}
+                  </div>
                 </div>
               )}
               <div className="flex gap-2">
@@ -1267,7 +1273,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
                       onClick={startWaitingCountdown}
                       className="bg-black text-white px-3 py-2 rounded-lg text-xs font-bold disabled:opacity-50"
                     >
-                      Gözləyirəm (+point)
+                      Gözləyirəm (+xal)
                     </button>
                     <button
                       disabled={decisionLoading}
@@ -1279,7 +1285,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
                       }}
                       className="bg-white text-gray-700 border border-gray-300 px-3 py-2 rounded-lg text-xs font-bold disabled:opacity-50"
                     >
-                      İndi minirəm (0 point)
+                      İndi minirəm (0 xal)
                     </button>
                   </>
                 ) : (
@@ -1289,14 +1295,21 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
                       onClick={startBonusJourneyAfterWait}
                       className="bg-black text-white px-3 py-2 rounded-lg text-xs font-bold disabled:opacity-50"
                     >
-                      Minirəm (+point)
+                      Marşruta min
+                    </button>
+                    <button
+                      disabled={decisionLoading}
+                      onClick={deactivateTravelMode}
+                      className="bg-white text-gray-700 border border-gray-300 px-3 py-2 rounded-lg text-xs font-bold disabled:opacity-50"
+                    >
+                      Minmirəm
                     </button>
                     <button
                       disabled={decisionLoading || waitSkippedDemo}
                       onClick={skipWaitForDemo}
                       className="bg-white text-orange-700 border border-orange-300 px-3 py-2 rounded-lg text-xs font-bold disabled:opacity-50"
                     >
-                      Wait skip (demo)
+                      Gözləməni keç (demo)
                     </button>
                   </>
                 )}
@@ -1312,16 +1325,16 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
 
           {(resolvedStops.origin || resolvedStops.destination) && (
             <div className="p-4 rounded-xl bg-white border border-gray-200 space-y-2">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Resolved Stops</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Təsdiqlənmiş Dayanacaqlar</p>
               {resolvedStops.origin && (
                 <p className="text-xs text-gray-700">
-                  Start: <span className="font-semibold">{resolvedStops.origin.name}</span>
+                  Başlanğıc: <span className="font-semibold">{resolvedStops.origin.name}</span>
                   {resolvedStops.origin.distance_meters ? ` (${Math.round(resolvedStops.origin.distance_meters)} m)` : ''}
                 </p>
               )}
               {resolvedStops.destination && (
                 <p className="text-xs text-gray-700">
-                  End: <span className="font-semibold">{resolvedStops.destination.name}</span>
+                  Son: <span className="font-semibold">{resolvedStops.destination.name}</span>
                 </p>
               )}
             </div>
@@ -1345,7 +1358,7 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
                     <span className="text-2xl font-bold">{route.eta} <span className="text-sm font-medium text-gray-400">min</span></span>
-                    {i === 0 && <span className="bg-gray-100 text-[10px] font-bold px-2 py-1 rounded-md uppercase">AI Recommended</span>}
+                    {i === 0 && <span className="bg-gray-100 text-[10px] font-bold px-2 py-1 rounded-md uppercase">AI Tövsiyəsi</span>}
                   </div>
                   <div className="flex gap-1">
                     {meta.isMetro ? (
@@ -1364,24 +1377,24 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
 
                 {(route.access_stop || route.walking_minutes_total) && (
                   <div className="mb-3 text-[11px] font-medium text-gray-600 bg-blue-50 rounded-lg px-3 py-2">
-                    {route.access_stop ? `Access stop: ${route.access_stop}` : 'Current-location access enabled'}
-                    {route.walking_minutes_total ? ` • Walk ${route.walking_minutes_total} min` : ''}
+                    {route.access_stop ? `Giriş dayanacağı: ${route.access_stop}` : 'Cari məkan girişi aktivdir'}
+                    {route.walking_minutes_total ? ` • Piyada ${route.walking_minutes_total} dəq` : ''}
                   </div>
                 )}
 
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div className="space-y-1">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase">Crowding</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase">Sıxlıq</span>
                     <div className="flex items-center gap-2">
                       <div className="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
                         <div className={`h-full ${route.is_peak_hour ? 'bg-red-500' : 'bg-green-500'}`} style={{ width: `${route.crowding}%` }} />
                       </div>
                       <span className="text-xs font-bold">{route.crowding}%</span>
                     </div>
-                    <span className="text-[10px] font-semibold text-gray-500">{route.crowd_level || 'MEDIUM'}</span>
+                    <span className="text-[10px] font-semibold text-gray-500">{route.crowd_level || 'ORTA'}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase">Confidence</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase">Etibarlılıq</span>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold">{route.confidence}%</span>
                     </div>
