@@ -1,10 +1,10 @@
 {
   "version": 2,
-  "installCommand": "uv pip install -r requirements.txt && npm install --prefix ../frontend",
-  "buildCommand": "rm -rf dist data && npm run build --prefix ../frontend && cp -R ../frontend/dist dist && cp -R ../data data",
+  "installCommand": "uv pip install -r backend/requirements.txt && npm install --prefix frontend",
+  "buildCommand": "rm -rf dist && npm run build --prefix frontend && cp -R frontend/dist dist",
   "outputDirectory": "dist",
   "functions": {
-    "main.py": {
+    "backend/main.py": {
       "runtime": "python3.12",
       "includeFiles": "data/**"
     }
@@ -20,39 +20,39 @@
     },
     {
       "source": "/api/v1/(.*)",
-      "destination": "/main.py"
+      "destination": "/backend/main.py"
     },
     {
       "source": "/auth/(.*)",
-      "destination": "/main.py"
+      "destination": "/backend/main.py"
     },
     {
       "source": "/journey/(.*)",
-      "destination": "/main.py"
+      "destination": "/backend/main.py"
     },
     {
       "source": "/user/(.*)",
-      "destination": "/main.py"
+      "destination": "/backend/main.py"
     },
     {
       "source": "/locations",
-      "destination": "/main.py"
+      "destination": "/backend/main.py"
     },
     {
       "source": "/traffic",
-      "destination": "/main.py"
+      "destination": "/backend/main.py"
     },
     {
       "source": "/plan",
-      "destination": "/main.py"
+      "destination": "/backend/main.py"
     },
     {
       "source": "/coupons",
-      "destination": "/main.py"
+      "destination": "/backend/main.py"
     },
     {
       "source": "/coupons/(.*)",
-      "destination": "/main.py"
+      "destination": "/backend/main.py"
     }
   ]
 }
