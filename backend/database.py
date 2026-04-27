@@ -1,8 +1,22 @@
+import os
+
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./bakukart.db"
+def _resolve_database_url() -> str:
+    explicit_url = os.getenv("DATABASE_URL")
+    if explicit_url:
+        return explicit_url
+
+    # Vercel functions run on a read-only filesystem except /tmp.
+    if os.getenv("VERCEL"):
+        return "sqlite:////tmp/bakukart.db"
+
+    return "sqlite:///./bakukart.db"
+
+
+SQLALCHEMY_DATABASE_URL = _resolve_database_url()
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
