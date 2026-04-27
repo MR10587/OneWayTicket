@@ -1,12 +1,12 @@
 {
   "version": 2,
-  "installCommand": "if [ -f frontend/package.json ]; then npm install --prefix frontend; elif [ -f ../frontend/package.json ]; then npm install --prefix ../frontend; else echo 'frontend/package.json not found'; exit 1; fi",
-  "buildCommand": "if [ -f frontend/package.json ]; then npm run build --prefix frontend && rm -rf dist && cp -R frontend/dist dist; elif [ -f ../frontend/package.json ]; then npm run build --prefix ../frontend && rm -rf dist && cp -R ../frontend/dist dist; else echo 'frontend/package.json not found'; exit 1; fi",
+  "installCommand": "npm install --prefix ../frontend",
+  "buildCommand": "npm run build --prefix ../frontend && rm -rf dist && cp -R ../frontend/dist dist",
   "outputDirectory": "dist",
   "functions": {
-    "backend/main.py": {
+    "main.py": {
       "runtime": "python3.12",
-      "includeFiles": "data/**"
+      "includeFiles": "../data/**"
     }
   },
   "rewrites": [
@@ -16,39 +16,39 @@
     },
     {
       "source": "/api/v1/(.*)",
-      "destination": "/backend/main.py"
+      "destination": "/main.py"
     },
     {
       "source": "/auth/(.*)",
-      "destination": "/backend/main.py"
+      "destination": "/main.py"
     },
     {
       "source": "/journey/(.*)",
-      "destination": "/backend/main.py"
+      "destination": "/main.py"
     },
     {
       "source": "/user/(.*)",
-      "destination": "/backend/main.py"
+      "destination": "/main.py"
     },
     {
       "source": "/locations",
-      "destination": "/backend/main.py"
+      "destination": "/main.py"
     },
     {
       "source": "/traffic",
-      "destination": "/backend/main.py"
+      "destination": "/main.py"
     },
     {
       "source": "/plan",
-      "destination": "/backend/main.py"
+      "destination": "/main.py"
     },
     {
       "source": "/coupons",
-      "destination": "/backend/main.py"
+      "destination": "/main.py"
     },
     {
       "source": "/coupons/(.*)",
-      "destination": "/backend/main.py"
+      "destination": "/main.py"
     }
   ]
 }
