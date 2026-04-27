@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+import importlib
 from sqlalchemy.orm import Session
 from typing import Optional
 from pydantic import BaseModel
@@ -15,11 +16,6 @@ try:
 except Exception:
     Mangum = None
 
-from controllers.location_controller import router as location_router
-from controllers.payment_controller import router as payment_router
-from controllers.route_controller import router as route_router
-from controllers.trip_controller import router as trip_router
-from controllers.waiting_controller import router as waiting_router
 from database import engine, get_db
 import models
 from services.data_service import data_service
@@ -44,11 +40,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(location_router)
-app.include_router(payment_router)
-app.include_router(route_router)
-app.include_router(trip_router)
-app.include_router(waiting_router)
+def _include_routers_safely(application: FastAPI):
+    router_modules = [
+        "controllers.location_controller",
+        "controllers.payment_controller",
+        "controllers.route_controller",
+        "controllers.trip_controller",
+        "controllers.waiting_controller",
+    ]
+
+    for module_name in router_modules:
+        try:
+            module = importlib.import_module(module_name)
+            router = getattr(module, "router", None)
+            if router is not None:
+                application.include_router(router)
+        except Exception as exc:
+            print(f"Router include skipped for {module_name}: {exc}")
+
+
+_include_routers_safely(app)
 
 
 def _ensure_database_schema():
