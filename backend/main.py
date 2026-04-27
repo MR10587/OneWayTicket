@@ -46,7 +46,7 @@ def _resolve_cors_origins() -> list[str]:
 
 
 cors_origins = _resolve_cors_origins()
-cors_origin_regex = os.getenv("CORS_ORIGIN_REGEX") or r".*"
+cors_origin_regex = os.getenv("CORS_ORIGIN_REGEX") or r"https://bakuflow2.*\.vercel\.app"
 
 app.add_middleware(
     CORSMiddleware,
@@ -56,6 +56,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+handler = Mangum(app)
+
 
 def _include_routers_safely(application: FastAPI):
     router_modules = [
