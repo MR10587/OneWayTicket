@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -9,14 +10,21 @@ def _resolve_database_url() -> str:
     if explicit_url:
         return explicit_url
 
-    # Vercel functions run on a read-only filesystem except /tmp.
+    # Serverless environments use ephemeral temp directories for writes.
     if os.getenv("VERCEL"):
-        return "sqlite:////tmp/bakukart.db"
+        temp_db_path = os.path.join(tempfile.gettempdir(), "bakukart.db")
+        return f"sqlite:///{temp_db_path}"
 
     return "sqlite:///./bakukart.db"
 
 
 SQLALCHEMY_DATABASE_URL = _resolve_database_url()
+
+if SQLALCHEMY_DATABASE_URL.startswith("sqlite:///"):
+    sqlite_path = SQLALCHEMY_DATABASE_URL.replace("sqlite:///", "", 1)
+    sqlite_dir = os.path.dirname(sqlite_path)
+    if sqlite_dir:
+        os.makedirs(sqlite_dir, exist_ok=True)
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
