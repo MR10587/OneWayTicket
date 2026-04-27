@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "installCommand": "npm install --prefix ../frontend",
+  "installCommand": "pip install -r requirements.txt && npm install --prefix ../frontend",
   "buildCommand": "rm -rf dist data && npm run build --prefix ../frontend && cp -R ../frontend/dist dist && cp -R ../data data",
   "outputDirectory": "dist",
   "functions": {
