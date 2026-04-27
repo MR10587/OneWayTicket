@@ -2,7 +2,7 @@ const normalizeBaseUrl = (value = '') => String(value).trim().replace(/\/+$/, ''
 
 const envBaseUrl = normalizeBaseUrl(import.meta.env.VITE_API_URL || '');
 
-export const API_BASE_URL = envBaseUrl || (import.meta.env.PROD ? '' : 'http://127.0.0.1:8000');
+export const API_BASE_URL = envBaseUrl || (import.meta.env.PROD ? '' : 'https://bakuflow2-ngzccisqp-mr10587s-projects.vercel.app/');
 
 if (import.meta.env.PROD && !envBaseUrl) {
   console.error('VITE_API_URL is not set. Configure it in frontend Vercel Environment Variables.');
