@@ -4,45 +4,6 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
-    {
-      "source": "/api/v1/(.*)",
-      "destination": "api/main.py"
-    },
-    {
-      "source": "/auth/(.*)",
-      "destination": "api/main.py"
-    },
-    {
-      "source": "/journey/(.*)",
-      "destination": "api/main.py"
-    },
-    {
-      "source": "/user/(.*)",
-      "destination": "api/main.py"
-    },
-    {
-      "source": "/locations",
-      "destination": "api/main.py"
-    },
-    {
-      "source": "/traffic",
-      "destination": "api/main.py"
-    },
-    {
-      "source": "/plan",
-      "destination": "api/main.py"
-    },
-    {
-      "source": "/coupons",
-      "destination": "api/main.py"
-    },
-    {
-      "source": "/coupons/(.*)",
-      "destination": "api/main.py"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
