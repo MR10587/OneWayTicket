@@ -21,8 +21,6 @@ from services.location_service import location_service
 from services.routing_service import routing_service
 from services.waiting_bonus_service import waiting_bonus_service
 
-models.Base.metadata.create_all(bind=engine)
-
 app = FastAPI(title="CityFlow API")
 
 load_dotenv()
@@ -45,6 +43,13 @@ app.include_router(payment_router)
 app.include_router(route_router)
 app.include_router(trip_router)
 app.include_router(waiting_router)
+
+
+def _ensure_database_schema():
+    try:
+        models.Base.metadata.create_all(bind=engine)
+    except Exception as exc:
+        print(f"Database schema initialization failed: {exc}")
 
 
 def _cleanup_cached_crowding(db: Session):
@@ -89,7 +94,14 @@ def _cleanup_cached_crowding(db: Session):
 # Initialize Demo User if not exists
 @app.on_event("startup")
 def startup_populate():
-    db = next(get_db())
+    _ensure_database_schema()
+
+    try:
+        db = next(get_db())
+    except Exception as exc:
+        print(f"Database session bootstrap failed: {exc}")
+        return
+
     try:
         desired_coupons = [
             {
@@ -216,6 +228,8 @@ def startup_populate():
             db.commit()
 
         _cleanup_cached_crowding(db)
+    except Exception as exc:
+        print(f"Startup data seeding skipped: {exc}")
     finally:
         db.close()
 

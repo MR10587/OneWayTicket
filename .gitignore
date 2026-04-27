@@ -1,0 +1,18 @@
+# Python
+backend/__pycache__/
+backend/**/*.pyc
+backend/venv/
+backend/venv_win/
+
+# Local database and env
+backend/.env
+backend/bakukart.db
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/

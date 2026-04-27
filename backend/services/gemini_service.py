@@ -1,21 +1,30 @@
-import google.generativeai as genai
 import os
 import json
 from dotenv import load_dotenv
 from services.data_service import data_service
 
+genai = None
+
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"))
 
 class GeminiService:
     def __init__(self):
+        global genai
         load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"))
         api_key = os.getenv("GEMINI_API_KEY")
         self.enabled = bool(api_key) and os.getenv("ENABLE_GEMINI_SUGGESTIONS", "0") == "1"
         self.model = None
 
         if self.enabled:
-            genai.configure(api_key=api_key)
-            self.model = genai.GenerativeModel('gemini-1.5-flash')
+            try:
+                import google.generativeai as genai_module
+                genai = genai_module
+                genai.configure(api_key=api_key)
+                self.model = genai.GenerativeModel('gemini-1.5-flash')
+            except Exception as exc:
+                print(f"Gemini initialization disabled: {exc}")
+                self.enabled = False
+                self.model = None
 
     async def get_ai_suggestions(self, start_name, end_name, time_str):
         if not self.enabled or not self.model:
