@@ -2,10 +2,6 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Accept build-time arguments
-ARG GEMINI_API_KEY
-ENV GEMINI_API_KEY=${GEMINI_API_KEY}
-
 # Install git so we can fetch data/ when build context is api/ (Railway sometimes
 # sets the build root to the `api` folder and data/ is located at the repo root).
 RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
