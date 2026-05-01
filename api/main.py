@@ -46,14 +46,14 @@ def _resolve_cors_origins() -> list[str]:
 
 
 cors_origins = _resolve_cors_origins()
-cors_origin_regex = os.getenv("CORS_ORIGIN_REGEX") or r"https://.*\.(vercel\.app|railway\.app)$"
+cors_origin_regex = os.getenv("CORS_ORIGIN_REGEX") or r"https://.*railway\.app"
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
     allow_origin_regex=cors_origin_regex,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
