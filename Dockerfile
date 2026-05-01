@@ -13,9 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY api/ ./
 
 # Copy data if present; if not, clone repo shallowly and copy data
-RUN if [ -d "./data" ]; then \
-      cp -r ./data ./data; \
-    else \
+RUN if [ ! -d "./data" ]; then \
       git clone --depth 1 https://github.com/MR10587/OneWayTicket.git /tmp/repo && \
       cp -r /tmp/repo/data ./data && \
       rm -rf /tmp/repo; \
