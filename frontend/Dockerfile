@@ -1,8 +1,8 @@
 FROM node:20-alpine
 WORKDIR /app
 
-# Accept build-time arguments
-ARG VITE_API_URL
+# Build argument for API URL - defaults to Railway backend
+ARG VITE_API_URL=https://onewayticket-production-aea8.up.railway.app
 ENV VITE_API_URL=${VITE_API_URL}
 
 COPY package*.json ./

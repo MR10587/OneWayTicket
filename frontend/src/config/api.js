@@ -2,14 +2,12 @@ const normalizeBaseUrl = (value = '') => String(value).trim().replace(/\/+$/, ''
 
 const envBaseUrl = normalizeBaseUrl(import.meta.env.VITE_API_URL || '');
 
-export const API_BASE_URL = envBaseUrl || (import.meta.env.PROD ? '' : 'https://bakuflow2-ngzccisqp-mr10587s-projects.vercel.app/');
+export const API_BASE_URL = envBaseUrl || (import.meta.env.PROD ? 'https://onewayticket-production-aea8.up.railway.app' : 'https://bakuflow2-ngzccisqp-mr10587s-projects.vercel.app/');
 
-if (import.meta.env.PROD && !envBaseUrl) {
-  console.error('VITE_API_URL is not set. Configure it in frontend Vercel Environment Variables.');
+if (!envBaseUrl && import.meta.env.PROD) {
+  console.info('VITE_API_URL not set at build time. Using Railway backend URL.');
 }
 
 export const requireConfiguredApiBaseUrl = () => {
-  if (import.meta.env.PROD && !envBaseUrl) {
-    throw new Error('VITE_API_URL is required in production for separate frontend/backend deployments.');
-  }
+  // No-op for Railway deployment
 };
