@@ -6,14 +6,17 @@ WORKDIR /app
 ARG GEMINI_API_KEY
 ENV GEMINI_API_KEY=${GEMINI_API_KEY}
 
-COPY requirements.txt .
+COPY api/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# Copy all API code
+COPY api/ .
+
+# Copy data files
+COPY data/ ./data/
 
 ENV PYTHONUNBUFFERED=1
 
-COPY start.sh .
 RUN chmod +x start.sh
 
 EXPOSE 8000
