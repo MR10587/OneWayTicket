@@ -231,9 +231,11 @@ const Planner = ({ signedInEmail, onProfileRefresh }) => {
   const fetchLocations = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/locations`);
+      console.log('Locations fetched:', res.data);
       setLocations(res.data);
     } catch (err) {
       console.error("Error fetching locations", err);
+      setLocations({});
     }
   };
 
