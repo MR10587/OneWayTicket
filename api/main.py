@@ -279,6 +279,35 @@ async def root():
 async def favicon():
     return JSONResponse(status_code=204, content=None)
 
+@app.get("/debug/data-dir")
+async def debug_data_dir():
+    """Debug endpoint: show resolved DATA_DIR and file list"""
+    import os
+    from services.data_service import DATA_DIR
+    
+    candidates = [
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data"),
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), "data"),
+        os.path.join(os.getcwd(), "data"),
+        "/app/data",
+        "/workspace/data",
+    ]
+    
+    result = {
+        "resolved_data_dir": DATA_DIR,
+        "exists": os.path.isdir(DATA_DIR) if DATA_DIR else False,
+        "cwd": os.getcwd(),
+        "candidates": {}
+    }
+    
+    for cand in candidates:
+        result["candidates"][cand] = {
+            "exists": os.path.isdir(cand),
+            "files": os.listdir(cand) if os.path.isdir(cand) else []
+        }
+    
+    return result
+
 @app.get("/locations")
 async def get_locations():
     return location_service.get_all_location_options()
