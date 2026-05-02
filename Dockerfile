@@ -2,7 +2,11 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install git so we can fetch data/ when build context lacks it
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install git for fallback only
 RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies
@@ -12,7 +16,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy backend sources
 COPY api/ ./
 
-# Copy data if present; if not, clone repo shallowly and copy data
+# Ensure data directory exists by cloning if not present
 RUN if [ ! -d "./data" ]; then \
       git clone --depth 1 https://github.com/MR10587/OneWayTicket.git /tmp/repo && \
       cp -r /tmp/repo/data ./data && \

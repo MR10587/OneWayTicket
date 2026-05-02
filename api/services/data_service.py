@@ -6,15 +6,19 @@ def _resolve_data_dir() -> str:
     if explicit_data_dir:
         return explicit_data_dir
 
-    # Support both repository-root deployments and backend-root deployments.
-    # Add a few extra common runtime locations so containers with different
-    # working directories still find the `data/` folder.
+    # Support multiple deployment contexts:
+    # 1. Repository-root deployments
+    # 2. Backend-root deployments (WORKDIR /app)
+    # 3. Container runtime environments
     candidate_dirs = [
-        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data"),
-        os.path.join(os.path.dirname(os.path.dirname(__file__)), "data"),
-        os.path.join(os.getcwd(), "data"),
+        # Container deployment (api/ copied to /app, so data at /app/data)
         "/app/data",
-        "/workspace/data",
+        # Local development: running from api/ directory
+        os.path.join(os.path.dirname(__file__), "..", "data"),
+        # Repository root (running from root)
+        os.path.join(os.path.dirname(__file__), "../../..", "data"),
+        # Fallback: current working directory
+        os.path.join(os.getcwd(), "data"),
     ]
 
     for candidate in candidate_dirs:
